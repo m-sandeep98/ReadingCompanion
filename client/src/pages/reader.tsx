@@ -39,12 +39,16 @@ export default function Reader() {
   }, [document, setDocument, setMode]);
 
   // Handle special case for PDF upload route
+  const { openDialog, setDialogTab } = useReader();
+  
   useEffect(() => {
     if (params?.id === "upload-pdf") {
       // Open dialog to upload PDF
       setMode("pdf");
+      setDialogTab('pdf');
+      openDialog();
     }
-  }, [params?.id, setMode]);
+  }, [params?.id, setMode, setDialogTab, openDialog]);
 
   // Handle error cases
   if (error) {

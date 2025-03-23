@@ -25,6 +25,7 @@ export function PdfReader({ document }: PdfReaderProps) {
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,10 +35,15 @@ export function PdfReader({ document }: PdfReaderProps) {
         const url = createBlobUrl(blob);
         setPdfUrl(url);
         setIsLoading(false);
+        setError(null);
       } catch (error) {
         console.error("Error creating PDF URL:", error);
+        setError("Failed to process the PDF file. The file might be corrupted.");
         setIsLoading(false);
       }
+    } else {
+      setError("No PDF data available for this document.");
+      setIsLoading(false);
     }
 
     // Cleanup function to revoke the blob URL when component unmounts
@@ -149,11 +155,28 @@ export function PdfReader({ document }: PdfReaderProps) {
 
       {/* PDF Viewer */}
       <div className="pdf-document-container flex justify-center">
-        {pdfUrl ? (
+        {error ? (
+          <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-6 rounded-lg shadow-sm max-w-md text-center">
+            <span className="block text-3xl mb-3">⚠️</span>
+            <h3 className="text-lg font-medium mb-2">Error Loading PDF</h3>
+            <p>{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => window.location.href = "/"}
+            >
+              Return to Home
+            </Button>
+          </div>
+        ) : pdfUrl ? (
           <Document
             file={pdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={(error) => console.error("Error loading PDF:", error)}
+            onLoadError={(pdfError) => {
+              console.error("Error loading PDF:", pdfError);
+              setError("Failed to load PDF document. It may be damaged or in an unsupported format.");
+            }}
             loading={
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -167,10 +190,15 @@ export function PdfReader({ document }: PdfReaderProps) {
               renderTextLayer={true}
               renderAnnotationLayer={true}
               className="pdf-page"
+              error={
+                <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded">
+                  Failed to render this page. It might be corrupted.
+                </div>
+              }
             />
           </Document>
         ) : (
-          <div className="bg-red-100 text-red-800 p-4 rounded">
+          <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded">
             Unable to load PDF. The file might be corrupted or not properly uploaded.
           </div>
         )}

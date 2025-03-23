@@ -206,10 +206,54 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
                 <Label className="block text-sm font-medium mb-1">
                   Upload a PDF file
                 </Label>
-                <div className="border-2 border-dashed dark:border-gray-600 rounded-md p-6 text-center">
-                  <span className="text-gray-400 text-3xl mb-2">📄</span>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Drag and drop a file here or click to browse
+                <div 
+                  className="border-2 border-dashed dark:border-gray-600 rounded-md p-6 text-center cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.add('bg-gray-100', 'dark:bg-gray-700');
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+                    
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      const file = e.dataTransfer.files[0];
+                      
+                      // Check if it's a PDF
+                      if (file.type === 'application/pdf') {
+                        if (fileInputRef.current) {
+                          // Create a new FileList to set the input value
+                          const dataTransfer = new DataTransfer();
+                          dataTransfer.items.add(file);
+                          fileInputRef.current.files = dataTransfer.files;
+                          
+                          // Auto-populate title if needed
+                          if (!pdfTitle) {
+                            const fileName = file.name;
+                            const titleFromFile = fileName.replace(/\.pdf$/i, '');
+                            setPdfTitle(titleFromFile);
+                          }
+                        }
+                      } else {
+                        setError("Please upload a PDF file");
+                      }
+                    }
+                  }}
+                >
+                  <span className="text-gray-400 text-3xl block mb-2">📄</span>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    {fileInputRef.current?.files?.[0] ? 
+                      `Selected file: ${fileInputRef.current.files[0].name}` : 
+                      "Drag and drop a PDF file here or click to browse"
+                    }
                   </p>
                   <input
                     type="file"
@@ -224,14 +268,15 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
                         const titleFromFile = fileName.replace(/\.pdf$/i, '');
                         setPdfTitle(titleFromFile);
                       }
+                      // Force component to re-render to show the selected file
+                      setError(null);
                     }}
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="mt-4"
-                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-2"
                   >
                     Browse Files
                   </Button>
