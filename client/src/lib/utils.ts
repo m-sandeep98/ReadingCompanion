@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function calculateReadingTime(text: string): number {
   if (!text) return 0;
-  
+
   const wordsPerMinute = 200;
   const words = text.trim().split(/\s+/).length;
   return Math.ceil(words / wordsPerMinute);
@@ -26,33 +26,33 @@ export function calculateReadingTime(text: string): number {
 export function formatRelativeDate(date: Date | string): string {
   const now = new Date();
   const then = typeof date === 'string' ? new Date(date) : date;
-  
+
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-  
+
   if (seconds < 60) {
     return 'just now';
   }
-  
+
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
     return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
   }
-  
+
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
     return `${hours} hour${hours === 1 ? '' : 's'} ago`;
   }
-  
+
   const days = Math.floor(hours / 24);
   if (days < 30) {
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
-  
+
   const months = Math.floor(days / 30);
   if (months < 12) {
     return `${months} month${months === 1 ? '' : 's'} ago`;
   }
-  
+
   const years = Math.floor(months / 12);
   return `${years} year${years === 1 ? '' : 's'} ago`;
 }
@@ -77,23 +77,33 @@ export function extractDomain(url: string): string {
  * @returns Blob object
  */
 export function base64ToBlob(base64: string, mimeType: string = 'application/pdf'): Blob {
-  const byteCharacters = atob(base64);
-  const byteArrays = [];
+  try {
+    // Remove potential data URI prefix
+    const base64Data = base64.includes('base64,')
+      ? base64.split('base64,')[1]
+      : base64;
 
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
+    const byteCharacters = atob(base64Data);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
     }
-    
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
 
-  const blob = new Blob(byteArrays, { type: mimeType });
-  return blob;
+    const blob = new Blob(byteArrays, { type: mimeType });
+    return blob;
+  } catch (error) {
+    console.error("Error converting base64 to blob:", error);
+    throw new Error("Failed to process the PDF data");
+  }
 }
 
 /**

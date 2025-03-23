@@ -51,12 +51,12 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
         body: formData,
         credentials: 'include'
       });
-      
+
       if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
+        const errorData = await res.json().catch(() => ({ message: res.statusText }));
+        throw new Error(errorData.message || "Failed to upload PDF");
       }
-      
+
       return res.json();
     },
     onSuccess: (data) => {
@@ -67,7 +67,11 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
       }
       setError(null);
       closeDialog();
-      navigate(`/reader/${data.id}`);
+
+      // Force a short delay before navigation to ensure state is updated
+      setTimeout(() => {
+        navigate(`/reader/${data.id}`);
+      }, 100);
     },
     onError: (error: Error) => {
       setError(`Failed to upload PDF: ${error.message}`);
@@ -76,7 +80,7 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
 
   const handleSubmitUrl = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const validatedData = addUrlDocumentSchema.parse({ url });
       urlMutation.mutate(validatedData);
@@ -91,9 +95,23 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
 
   const handleSubmitPdf = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!fileInputRef.current?.files?.[0]) {
       setError("Please select a PDF file");
+      return;
+    }
+
+    const file = fileInputRef.current.files[0];
+
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      setError("Please select a valid PDF file");
+      return;
+    }
+
+    // Validate file size
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      setError("PDF file is too large (max 10MB)");
       return;
     }
 
@@ -103,11 +121,12 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
     }
 
     const formData = new FormData();
-    formData.append('file', fileInputRef.current.files[0]);
+    formData.append('file', file);
     formData.append('title', pdfTitle);
-    
+
     pdfMutation.mutate(formData);
   };
+
 
   if (!isOpen) return null;
 
@@ -124,21 +143,19 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
           {/* Tab Navigation */}
           <div className="flex border-b dark:border-gray-700 mb-4">
             <button
-              className={`px-4 py-2 font-medium ${
-                tab === 'url'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
+              className={`px-4 py-2 font-medium ${tab === 'url'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-gray-500 dark:text-gray-400'
+                }`}
               onClick={() => setTab('url')}
             >
               URL
             </button>
             <button
-              className={`px-4 py-2 font-medium ${
-                tab === 'pdf'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
+              className={`px-4 py-2 font-medium ${tab === 'pdf'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-gray-500 dark:text-gray-400'
+                }`}
               onClick={() => setTab('pdf')}
             >
               PDF
@@ -151,7 +168,7 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
               {error}
             </div>
           )}
-          
+
           {/* URL Input Tab */}
           {tab === 'url' && (
             <form onSubmit={handleSubmitUrl}>
@@ -185,7 +202,7 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
               </Button>
             </form>
           )}
-          
+
           {/* PDF Upload Tab */}
           {tab === 'pdf' && (
             <form onSubmit={handleSubmitPdf}>
@@ -202,11 +219,11 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
                   required
                   className="w-full mb-4"
                 />
-                
+
                 <Label className="block text-sm font-medium mb-1">
                   Upload a PDF file
                 </Label>
-                <div 
+                <div
                   className="border-2 border-dashed dark:border-gray-600 rounded-md p-6 text-center cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={(e) => {
@@ -223,10 +240,10 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.currentTarget.classList.remove('bg-gray-100', 'dark:bg-gray-700');
-                    
+
                     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                       const file = e.dataTransfer.files[0];
-                      
+
                       // Check if it's a PDF
                       if (file.type === 'application/pdf') {
                         if (fileInputRef.current) {
@@ -234,7 +251,7 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
                           const dataTransfer = new DataTransfer();
                           dataTransfer.items.add(file);
                           fileInputRef.current.files = dataTransfer.files;
-                          
+
                           // Auto-populate title if needed
                           if (!pdfTitle) {
                             const fileName = file.name;
@@ -250,8 +267,8 @@ export function InputDialog({ isOpen, onClose, initialTab }: InputDialogProps) {
                 >
                   <span className="text-gray-400 text-3xl block mb-2">📄</span>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    {fileInputRef.current?.files?.[0] ? 
-                      `Selected file: ${fileInputRef.current.files[0].name}` : 
+                    {fileInputRef.current?.files?.[0] ?
+                      `Selected file: ${fileInputRef.current.files[0].name}` :
                       "Drag and drop a PDF file here or click to browse"
                     }
                   </p>

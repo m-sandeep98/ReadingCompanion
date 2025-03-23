@@ -9,9 +9,9 @@ interface TopNavProps {
 }
 
 export function TopNav({ onToggleSidebar, isSidebarOpen, document }: TopNavProps) {
-  const { 
-    openDialog, 
-    toggleAiMenu, 
+  const {
+    openDialog,
+    toggleAiMenu,
     isAiMenuOpen,
     setDialogTab,
     mode,
@@ -39,32 +39,30 @@ export function TopNav({ onToggleSidebar, isSidebarOpen, document }: TopNavProps
             >
               <span className="text-xl">☰</span>
             </button>
-            
+
             {/* Document Type Tabs */}
             {document && (
               <div className="hidden sm:flex space-x-1 ml-2">
-                <button 
-                  className={`px-3 py-1.5 text-sm font-medium rounded-t ${
-                    mode === 'url' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
-                  }`}
-                  onClick={() => setMode('url')}
-                  disabled={document.type !== 'url' && document.type !== 'pdf'}
+                <button
+                  className={`px-3 py-1.5 text-sm font-medium rounded-t ${mode === 'url' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
+                    }`}
+                  onClick={() => document.content ? setMode('url') : null}
+                  disabled={!document.content}
                 >
                   Web Article
                 </button>
-                <button 
-                  className={`px-3 py-1.5 text-sm font-medium rounded-t ${
-                    mode === 'pdf' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
-                  }`}
-                  onClick={() => setMode('pdf')}
-                  disabled={document.type !== 'pdf' && document.type !== 'url'}
+                <button
+                  className={`px-3 py-1.5 text-sm font-medium rounded-t ${mode === 'pdf' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
+                    }`}
+                  onClick={() => document.pdfData ? setMode('pdf') : null}
+                  disabled={!document.pdfData}
                 >
                   PDF
                 </button>
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* URL Input Button */}
             <Button
@@ -76,7 +74,7 @@ export function TopNav({ onToggleSidebar, isSidebarOpen, document }: TopNavProps
               <span className="text-sm mr-1">🔗</span>
               <span>Add URL</span>
             </Button>
-            
+
             {/* Upload PDF Button */}
             <Button
               variant="outline"
@@ -87,7 +85,7 @@ export function TopNav({ onToggleSidebar, isSidebarOpen, document }: TopNavProps
               <span className="text-sm mr-1">📄</span>
               <span>Upload PDF</span>
             </Button>
-            
+
             {/* AI Features Button */}
             <Button
               size="sm"

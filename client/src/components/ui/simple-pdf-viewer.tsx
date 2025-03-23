@@ -12,35 +12,55 @@ export function SimplePdfViewer({ document }: SimplePdfViewerProps) {
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState(1.0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [shouldReload, setShouldReload] = useState(0);
+  const reloadPdf = () => {
+    setIsLoading(true);
+    setError(null);
+    setShouldReload(prev => prev + 1);
+  };
+
 
   useEffect(() => {
     if (document?.pdfData) {
       try {
-        const blob = base64ToBlob(document.pdfData);
-        const url = createBlobUrl(blob);
-        
-        // Set the source of the iframe
-        if (iframeRef.current) {
-          iframeRef.current.src = url;
-        }
-        
-        setIsLoading(false);
-        setError(null);
+        setIsLoading(true);
 
-        // Clean up the URL when unmounting
-        return () => {
-          URL.revokeObjectURL(url);
-        };
+        // Create a data URL directly instead of using blob URL
+        const dataUrl = `data:application/pdf;base64,${document.pdfData}`;
+
+        if (iframeRef.current) {
+          // Use data URL directly instead of blob URL
+          iframeRef.current.src = dataUrl;
+
+          // Add load event listener
+          const handleLoad = () => setIsLoading(false);
+          const handleError = () => {
+            console.error("Failed to load PDF in iframe");
+            setError("Failed to display the PDF. Try downloading it instead.");
+            setIsLoading(false);
+          };
+
+          iframeRef.current.addEventListener('load', handleLoad);
+          iframeRef.current.addEventListener('error', handleError);
+
+          return () => {
+            if (iframeRef.current) {
+              iframeRef.current.removeEventListener('load', handleLoad);
+              iframeRef.current.removeEventListener('error', handleError);
+            }
+          };
+        }
       } catch (error) {
-        console.error("Error creating PDF URL:", error);
-        setError("Failed to process the PDF file. The file might be corrupted.");
+        console.error("Error setting up PDF viewer:", error);
+        setError("Failed to process the PDF file.");
         setIsLoading(false);
       }
     } else {
       setError("No PDF data available for this document.");
       setIsLoading(false);
     }
-  }, [document?.pdfData]);
+  }, [document?.pdfData, shouldReload]); // Added shouldReload dependency
+
 
   function zoomIn() {
     setScale(prevScale => Math.min(2.0, prevScale + 0.1));
@@ -110,21 +130,30 @@ export function SimplePdfViewer({ document }: SimplePdfViewerProps) {
             <span className="block text-3xl mb-3">⚠️</span>
             <h3 className="text-lg font-medium mb-2">Error Loading PDF</h3>
             <p>{error}</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-4"
-              onClick={() => window.location.href = "/"}
-            >
-              Return to Home
-            </Button>
+            <div className="flex justify-center space-x-3 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={reloadPdf}
+              >
+                Try Again
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = "/"}
+              >
+                Return to Home
+              </Button>
+            </div>
           </div>
         ) : (
-          <iframe 
+          // Existing iframe component
+          <iframe
             ref={iframeRef}
-            style={{ 
-              width: '100%', 
-              height: '80vh', 
+            style={{
+              width: '100%',
+              height: '80vh',
               border: 'none',
               transform: `scale(${scale})`,
               transformOrigin: 'top center'

@@ -12,7 +12,7 @@ export default function Reader() {
   const [match, params] = useRoute("/reader/:id");
   const [_, navigate] = useLocation();
   const { setDocument, setMode, mode } = useReader();
-  
+
   // Determine if we're in "upload-pdf" special route
   const isUploadPdfRoute = params?.id === "upload-pdf";
 
@@ -32,19 +32,26 @@ export default function Reader() {
   useEffect(() => {
     if (document) {
       setDocument(document);
-      // Set mode based on document type
-      setMode(document.type as 'url' | 'pdf');
+      // Set mode based on document type with validation
+      if (document.type === 'pdf' && document.pdfData) {
+        setMode('pdf');
+      } else if (document.type === 'url' && document.content) {
+        setMode('url');
+      } else {
+        // Fallback to the available content type
+        setMode(document.pdfData ? 'pdf' : document.content ? 'url' : null);
+      }
     }
-    
     // Cleanup on unmount
     return () => {
       setDocument(null);
+      setMode(null);
     };
   }, [document, setDocument, setMode]);
 
   // Handle special case for PDF upload route
   const { openDialog, setDialogTab } = useReader();
-  
+
   useEffect(() => {
     if (params?.id === "upload-pdf") {
       // Open dialog to upload PDF
@@ -80,10 +87,10 @@ export default function Reader() {
         <div className="flex flex-col items-center justify-center h-full p-8">
           <h2 className="text-2xl font-bold mb-4">Upload a PDF Document</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6 text-center max-w-md">
-            Please use the dialog to upload your PDF file. If the dialog is closed, 
+            Please use the dialog to upload your PDF file. If the dialog is closed,
             click the "Add New" button in the navigation bar.
           </p>
-          <Button 
+          <Button
             onClick={() => {
               setDialogTab('pdf');
               openDialog();
@@ -99,11 +106,39 @@ export default function Reader() {
         </div>
       ) : document ? (
         <>
-          {mode === 'url' && document.content && (
+          {mode === 'url' && document.content ? (
             <ArticleReader document={document} />
-          )}
-          {mode === 'pdf' && document.pdfData && (
+          ) : mode === 'pdf' && document.pdfData ? (
             <SimplePdfViewer document={document} />
+          ) : (
+            // Fallback content display when the selected mode doesn't match available content
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md max-w-lg mx-auto my-8 text-center">
+              <h3 className="text-xl font-bold mb-4">Content Not Available</h3>
+
+              {document.content && !document.pdfData ? (
+                <p className="mb-4">This document only has web article content available.</p>
+              ) : document.pdfData && !document.content ? (
+                <p className="mb-4">This document only has PDF content available.</p>
+              ) : (
+                <p className="mb-4">This document has no viewable content.</p>
+              )}
+
+              <div className="flex justify-center gap-3 mt-6">
+                {document.content && (
+                  <Button onClick={() => setMode('url')}>
+                    View as Article
+                  </Button>
+                )}
+                {document.pdfData && (
+                  <Button onClick={() => setMode('pdf')}>
+                    View as PDF
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Return Home
+                </Button>
+              </div>
+            </div>
           )}
         </>
       ) : (
