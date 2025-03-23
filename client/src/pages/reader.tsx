@@ -103,7 +103,7 @@ export default function Reader() {
             <ArticleReader document={document} />
           )}
           {mode === 'pdf' && document.pdfData && (
-            <PdfReader document={document} />
+            <SimplePdfViewer document={document} />
           )}
         </>
       ) : (
