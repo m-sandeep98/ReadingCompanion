@@ -59,20 +59,24 @@ export function SelectionMenu() {
     const handleMouseDown = (e: MouseEvent) => {
       // Close menu when clicking outside
       if (isVisible && e.target instanceof Node) {
-        const menu = document.getElementById('selection-menu');
+        const menu = window.document.getElementById('selection-menu');
         if (menu && !menu.contains(e.target)) {
           setIsVisible(false);
         }
       }
     };
     
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mousedown', handleMouseDown);
-    
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mousedown', handleMouseDown);
-    };
+    // Use window.document instead of document to avoid variable name confusion
+    if (typeof window !== 'undefined') {
+      window.document.addEventListener('mouseup', handleMouseUp);
+      window.document.addEventListener('mousedown', handleMouseDown);
+      
+      return () => {
+        window.document.removeEventListener('mouseup', handleMouseUp);
+        window.document.removeEventListener('mousedown', handleMouseDown);
+      };
+    }
+    return undefined;
   }, [setSelectedText, isVisible]);
 
   const handleHighlight = () => {
