@@ -147,10 +147,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (data.documentId) {
         const document = await storage.getDocument(data.documentId);
-        if (!document) {
-          return res.status(404).json({ message: "Document not found" });
+        if (!document || !document.content) {
+          return res.status(404).json({ message: "Document not found or has no content" });
         }
-        textToSummarize = document.content;
+        // Force non-null content type since we've checked it above
+        textToSummarize = document.content as string;
       } else if (data.text) {
         textToSummarize = data.text;
       } else {

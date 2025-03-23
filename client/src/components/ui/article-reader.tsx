@@ -36,8 +36,12 @@ export function ArticleReader({ document }: ArticleReaderProps) {
       }
     };
 
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => document.removeEventListener('mouseup', handleMouseUp);
+    // Use window.document to avoid variable name collision with the document prop
+    if (typeof window !== 'undefined') {
+      window.document.addEventListener('mouseup', handleMouseUp);
+      return () => window.document.removeEventListener('mouseup', handleMouseUp);
+    }
+    return undefined;
   }, [setSelectedText]);
 
   if (isLoading) {
