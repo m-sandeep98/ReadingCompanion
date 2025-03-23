@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ReaderLayout } from "@/components/ui/reader-layout";
 import { ArticleReader } from "@/components/ui/article-reader";
 import { PdfReader } from "@/components/ui/pdf-reader";
+import { Button } from "@/components/ui/button";
 import { useReader } from "@/hooks/use-reader";
 import { Document } from "@/lib/types";
 
@@ -12,16 +13,19 @@ export default function Reader() {
   const [_, navigate] = useLocation();
   const { setDocument, setMode, mode } = useReader();
   
-  // Fetch document data
+  // Determine if we're in "upload-pdf" special route
+  const isUploadPdfRoute = params?.id === "upload-pdf";
+
+  // Fetch document data (only if not in upload-pdf route)
   const { data: document, isLoading, error } = useQuery<Document>({
     queryKey: [`/api/documents/${params?.id}`],
-    enabled: !!params?.id,
+    enabled: !!params?.id && !isUploadPdfRoute,
   });
 
-  // Fetch document highlights
+  // Fetch document highlights (only if not in upload-pdf route)
   const { data: highlights } = useQuery({
     queryKey: [`/api/documents/${params?.id}/highlights`],
-    enabled: !!params?.id,
+    enabled: !!params?.id && !isUploadPdfRoute,
   });
 
   // Set document in reader context
@@ -72,7 +76,24 @@ export default function Reader() {
 
   return (
     <ReaderLayout>
-      {isLoading ? (
+      {isUploadPdfRoute ? (
+        <div className="flex flex-col items-center justify-center h-full p-8">
+          <h2 className="text-2xl font-bold mb-4">Upload a PDF Document</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 text-center max-w-md">
+            Please use the dialog to upload your PDF file. If the dialog is closed, 
+            click the "Add New" button in the navigation bar.
+          </p>
+          <Button 
+            onClick={() => {
+              setDialogTab('pdf');
+              openDialog();
+            }}
+            className="px-6"
+          >
+            Open PDF Upload
+          </Button>
+        </div>
+      ) : isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
