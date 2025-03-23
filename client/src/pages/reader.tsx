@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ReaderLayout } from "@/components/ui/reader-layout";
 import { ArticleReader } from "@/components/ui/article-reader";
-import { PdfReader } from "@/components/ui/pdf-reader";
+import { SimplePdfViewer } from "@/components/ui/simple-pdf-viewer";
 import { Button } from "@/components/ui/button";
 import { useReader } from "@/hooks/use-reader";
 import { Document } from "@/lib/types";

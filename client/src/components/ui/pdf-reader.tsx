@@ -8,10 +8,18 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 
-// Set up PDF.js worker
-// This configuration specifies the PDF.js worker to be loaded from a CDN
-// But we'll make sure it has proper error handling
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// PDF.js worker setup
+// Use a more reliable approach for PDF.js worker configuration
+// This ensures we use the fake worker when the real worker fails to load
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+// Enable the fake worker as a fallback
+// @ts-ignore - Tell PDF.js to use fake workers if needed
+if (typeof window !== 'undefined') {
+  window.pdfjsLib = window.pdfjsLib || {};
+  // @ts-ignore
+  window.pdfjsLib.GlobalWorkerOptions = pdfjs.GlobalWorkerOptions;
+}
 
 interface PdfReaderProps {
   document: DocumentType;
