@@ -33,16 +33,21 @@ export function ReaderLayout({ children }: ReaderLayoutProps) {
   // Update reading progress on scroll
   useEffect(() => {
     const updateReadingProgress = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = document.documentElement.clientHeight;
-      const scrolled = (scrollTop / (scrollHeight - clientHeight)) * 100;
-      
-      setReadingProgress(scrolled);
+      if (typeof window !== 'undefined' && window.document && window.document.documentElement) {
+        const scrollTop = window.scrollY || window.document.documentElement.scrollTop;
+        const scrollHeight = window.document.documentElement.scrollHeight;
+        const clientHeight = window.document.documentElement.clientHeight;
+        const scrolled = (scrollTop / (scrollHeight - clientHeight)) * 100;
+        
+        setReadingProgress(scrolled);
+      }
     };
 
-    window.addEventListener('scroll', updateReadingProgress);
-    return () => window.removeEventListener('scroll', updateReadingProgress);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', updateReadingProgress);
+      return () => window.removeEventListener('scroll', updateReadingProgress);
+    }
+    return undefined;
   }, []);
 
   return (
